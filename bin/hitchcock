@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/hitchcock.rb'
+
+h = Hitchcock::Simple.new
+
+h.run
