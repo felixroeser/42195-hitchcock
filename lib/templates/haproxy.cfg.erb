@@ -1,9 +1,8 @@
 global
-    # pidfile /var/run/haproxy.pid
-    pidfile /tmp/haproxy.pid
+    pidfile /var/run/haproxy.pid
     log 127.0.0.1 local0 info
-    # user haproxy
-    # group haproxy
+    user haproxy
+    group haproxy
     # daemon
 
 defaults
@@ -32,14 +31,15 @@ frontend http
     use_backend marathon if marathon
     use_backend mesos if mesos
 
-    <% @endpoints.each do |app, versions| %>
-    <% versions.each do |version, data| %>
-    acl <%= data['name'] %> hdr_end(host) -i <%= data['name'] %>.director.<%= @cluster %>.<%= @env %>
-    use_backend <%= data['name'] %> if <%= data['name'] %>
+    <% # FIXME don't need that many backends %>
+    <% @reduced_endpoints.each do |app, versions| %>
+    <% versions.each do |a, data| %>
+    <% v = a.size == 0 ? '' : "-v#{a.join('.')}" 
+       name = "#{app}#{v}" %>
+    acl <%= name %> hdr_end(host) -i <%= name %>.director.<%= @cluster %>.<%= @env %>
+    use_backend <%= name %> if <%= name %>
     <% end %>
     <% end %>
-
-    ## CUSTOM RULES
 
 backend marathon
     option httpclose
@@ -55,16 +55,17 @@ backend mesos
     server <%= "marathon-#{index}" %> <%= m %> weight 1 maxconn 50 check inter 4000
     <% end %>
 
-<% @endpoints.each do |app, versions| %>
-<% versions.each do |version, data| %>
-backend <%= data['name'] %>
-    option httpclose
-
-    <% data['instances'].each_with_index do |instance, index| %>
-    <% instance['ports'].each_with_index do |port, port_index| %>
-    server <%= "#{data['name']}-#{index}-#{port_index}" %> <%= "#{instance['host']}:#{port}" %> weight 1 maxconn 50 inter 4000
-    <% end %>
-    <% end %>
-
+<% @reduced_endpoints.each do |app, versions| %>
+<% versions.each do |a, data| %>
+<% v = a.size == 0 ? '' : "-v#{a.join('.')}" 
+   name = "#{app}#{v}" %>
+backend <%= name %>
+  option httpclose
+  <% data['instances'].each_with_index do |instance, index| %>
+  <% instance['ports'].each_with_index do |port, port_index| %>
+  server <%= "#{name}-#{index}-#{port_index}" %> <%= "#{instance['host']}:#{port}" %> weight 1 maxconn 50 inter 4000
+  <% end %>
+  <% end %>
 <% end %>
 <% end %>
+

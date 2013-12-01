@@ -1,7 +1,25 @@
 #!/usr/bin/env ruby
 
-require_relative '../lib/hitchcock.rb'
+require File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'hitchcock'))
+require 'trollop'
 
-h = Hitchcock::Simple.new
+SUB_COMMANDS = %w[start haproxy_config]
 
-h.run
+global_opts = Trollop.options do
+  version Marathon::VERSION
+
+  opt :zookeepers, "Zookeeper servers; will default to ENV['ZOOKEEPERS'] (optional)", short: '-Z', type: String
+  opt :cluster,    "Current 42195 cluster name; will default to ENV['cluster'] (optional).", short: '-C', type: String
+  opt :env,        "Current 42195 env name; will default to ENV['ENV'] (optional).", short: '-E', type: String
+  stop_on SUB_COMMANDS
+end
+
+cmd = ARGV.shift
+
+if cmd == 'start'
+  puts "TBI"
+elsif cmd == 'haproxy_config'
+  puts Hitchcock::Hacky.new(global_opts).render_haproxy_cfg
+else
+  Trollop.die "unknown subcommand #{cmd.inspect}"
+end

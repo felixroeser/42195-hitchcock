@@ -8,6 +8,7 @@ Will at some point provide the director for [42195](https://github.com/felixroes
 export ZOOKEEPERS=10.1.1.10
 export ENV=dev
 export CLUSTER=cluster1
-./bin/hitchcock > /tmp/haproxy.cfg
+bundle install --deployment
+bundle exec ./bin/hitchcock haproxy_config > /tmp/haproxy.cfg
 sudo haproxy -f /tmp/haproxy.cfg -d
 ````
