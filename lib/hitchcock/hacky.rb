@@ -1,4 +1,3 @@
-
 require 'awesome_print'
 
 module Hitchcock
@@ -7,9 +6,12 @@ module Hitchcock
     include ERB::Util
 
     def initialize(opts={})
-      @env     = opts['env'] || ENV['ENV']
-      @cluster = opts['cluster'] || ENV['CLUSTER']
-      @zk      = ZK.new(opts['zookeepers'] || ENV['ZOOKEEPERS'].split(',').collect { |z| "#{z}:2181" }.join(','))
+      @env     = opts[:env] || ENV['ENV']
+      @cluster = opts[:cluster] || ENV['CLUSTER']
+
+      # FIXME wait for zookeeper, marathon and mesos
+      # =     /var/lib/gems/2.0.0/gems/zookeeper-1.4.7/ext/c_zookeeper.rb:92:in `zkrb_init': error connecting to zookeeper: 22 (RuntimeError)
+      @zk      = ZK.new (opts[:zookeepers] || ENV['ZOOKEEPERS']).split(',').collect { |z| "#{z}:2181" }.join(',')
 
       @marathon_instances = [@zk.get('/marathon/leader/member_0000000000').first]
       @mesos_instances    = @zk.children('/mesos').collect { |c| @zk.get("/mesos/#{c}").first.split('@').last }

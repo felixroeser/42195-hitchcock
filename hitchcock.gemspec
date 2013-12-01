@@ -23,6 +23,4 @@ Gem::Specification.new do |spec|
   spec.add_dependency "marathon_client"
   spec.add_dependency "logging"
   spec.add_dependency "awesome_print"
-
-  spec.add_development_dependency "bundler"
 end
