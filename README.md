@@ -11,4 +11,7 @@ export CLUSTER=cluster1
 bundle install --deployment
 bundle exec ./bin/hitchcock haproxy_config > /tmp/haproxy.cfg
 sudo haproxy -f /tmp/haproxy.cfg -d
+
+# or
+bundle exec ./bin/hitchcock start
 ````

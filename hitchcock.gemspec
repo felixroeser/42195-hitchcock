@@ -21,6 +21,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "trollop", "~> 2.0"
   spec.add_dependency "zk"
   spec.add_dependency "marathon_client"
+  spec.add_dependency "logging"
   spec.add_dependency "awesome_print"
 
   spec.add_development_dependency "bundler"

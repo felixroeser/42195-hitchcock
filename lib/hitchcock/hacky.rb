@@ -16,8 +16,10 @@ module Hitchcock
 
       @marathon = Marathon::Client.new(
         "http://#{@marathon_instances.first}"
-        # "http://#{ENV['MARATHON'] || 'marathon.director.cluster1.env'}"
       )
+
+      @haproxy_pid = "/var/run/haproxy.pid"
+      @haproxy_cfg = "/tmp/haproxy.cfg"
     end
 
     def endpoints
@@ -52,7 +54,6 @@ module Hitchcock
 
           [ [], [major], [major, minor], [major, minor, patch] ].each do |a|
             next if a.size > 1 && a.compact.size != a.size
-
             h[app][ a ] = data if h[app][ a ].nil? || data['version'] > h[app][ a ]['version']
           end
         end
@@ -67,9 +68,41 @@ module Hitchcock
       ERB.new(template).result(binding)
     end
 
+    # just the happy path...
     def run
-      endpoints
-      true
+      Hitchcock.logging.debug "called run..."
+      reduced_endpoints
+
+      haproxy_start! unless haproxy_running?
+      current_reduced_endpoints_hash = @reduced_endpoints.hash
+
+      # before listening to ZK events => do it stupid
+      while true do
+        sleep 10
+        if reduced_endpoints.hash != current_reduced_endpoints_hash
+          current_reduced_endpoints_hash = @reduced_endpoints.hash
+          haproxy_start!(true)
+        end
+      end
+    end
+
+    def haproxy_running?
+      return nil unless pid = File.read( @haproxy_pid ).to_i rescue nil
+
+      Process.getpgid(pid) rescue nil ? pid : nil
+    end
+
+    def haproxy_start!(restart=false)
+      File.open(@haproxy_cfg, "w+") { |file| file.puts render_haproxy_cfg }
+      `haproxy -f #{@haproxy_cfg} -D -p #{@haproxy_pid} #{"-st $(cat #{@haproxy_pid})" if restart}`
+      Hitchcock.logging.info "(Re)started haproxy"
+      print_config
+    end
+
+    def print_config
+      @endpoints.each do |app, versions|
+        Hitchcock.logging.info [app, versions.keys]
+      end
     end
 
   end

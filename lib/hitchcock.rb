@@ -7,9 +7,19 @@ Bundler.setup
 require 'marathon'
 require 'zk'
 require 'erb'
+require 'logging'
 
 require "hitchcock/version"
 require "hitchcock/hacky"
 
 module Hitchcock
+
+  def self.logging
+    return @logger unless @logger.nil?
+
+    @logger = Logging.logger(STDOUT)
+    @logger.level = :debug
+    @logger
+  end
+
 end
